@@ -87,12 +87,6 @@ const options = {
                 }
             }
         },
-        tags: [
-            {
-                name: 'Authentication',
-                description: 'Endpoint untuk registrasi, verifikasi OTP, dan login'
-            }
-        ]
     },
     apis: ['./routes/*.js'] // Path ke file route yang akan didokumentasikan
 };
