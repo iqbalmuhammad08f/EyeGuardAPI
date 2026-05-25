@@ -14,6 +14,10 @@ const options = {
         },
         servers: [
             {
+                url: 'https://eye-guard-api.vercel.app',
+                description: 'Server Production (Vercel)'
+            },
+            {
                 url: 'http://localhost:3000',
                 description: 'Server Development'
             }
