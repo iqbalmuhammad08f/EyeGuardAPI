@@ -1,5 +1,5 @@
 // config/db.js
-const { Pool } = require('pg');
+const { Pool } = require('@neondatabase/serverless');
 
 // Ambil connection string dari environment variable yang disediakan Vercel
 const connectionString = process.env.DATABASE_URL;

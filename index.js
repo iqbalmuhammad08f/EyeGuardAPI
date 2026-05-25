@@ -5,11 +5,23 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger/swagger');
 
 const authRoutes = require('./routes/auth');
-const dashboardRoutes = require('./routes/dashboard'); // <-- tambahkan
+const dashboardRoutes = require('./routes/dashboard');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Welcome route
+app.get('/', (req, res) => {
+    res.json({
+        message: 'EyeGuard API is running',
+        docs: '/api-docs',
+        endpoints: {
+            auth: '/api/auth',
+            dashboard: '/api/dashboard'
+        }
+    });
+});
 
 // Swagger docs
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
