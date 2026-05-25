@@ -1,10 +1,5 @@
 # EyeGuard Mobile API
 
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D%2016.0.0-blue.svg)](https://nodejs.org)
-[![Express Version](https://img.shields.io/badge/express-v5.2.1-green.svg)](https://expressjs.com)
-[![PostgreSQL](https://img.shields.io/badge/postgres-%3E%3D%2012-blue.svg)](https://www.postgresql.org)
-[![License](https://img.shields.io/badge/license-ISC-green.svg)](https://opensource.org/licenses/ISC)
-
 Backend REST API untuk **EyeGuard**, sebuah aplikasi monitoring penggunaan smartphone yang dilengkapi dengan fitur deteksi cahaya lingkungan. API ini menangani otentikasi pengguna, verifikasi OTP via email, manajemen reset password, serta proteksi endpoint data statistik menggunakan JWT (JSON Web Tokens).
 
 ---
@@ -16,19 +11,6 @@ Backend REST API untuk **EyeGuard**, sebuah aplikasi monitoring penggunaan smart
 - **Password Self-Service**: Fitur lupa password dan reset password terproteksi menggunakan kode verifikasi OTP.
 - **Protected Routes**: Middleware JWT untuk mengamankan data privat seperti statistik penggunaan aplikasi.
 - **Interactive API Docs**: Dokumentasi API interaktif menggunakan **Swagger UI** yang dapat diakses langsung dari browser.
-
----
-
-## Tech Stack
-
-- **Runtime Environment**: [Node.js](https://nodejs.org/)
-- **Web Framework**: [Express.js](https://expressjs.com/) (v5.2.1)
-- **Database**: [PostgreSQL](https://www.postgresql.org/) (`pg` pool)
-- **Security**: 
-  - `bcrypt` (Hashing password)
-  - `jsonwebtoken` (Otentikasi JWT)
-- **Email Service**: [Nodemailer](https://nodemailer.com/) (Gmail SMTP)
-- **Documentation**: [Swagger UI Express](https://swagger.io/tools/swagger-ui/) & `swagger-jsdoc`
 
 ---
 

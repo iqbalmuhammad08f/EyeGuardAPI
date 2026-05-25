@@ -1,11 +1,18 @@
+// config/db.js
 const { Pool } = require('pg');
 
+// Ambil connection string dari environment variable yang disediakan Vercel
+const connectionString = process.env.POSTGRES_URL;
+
+if (!connectionString) {
+  console.error('FATAL ERROR: Environment variable POSTGRES_URL is not set.');
+  process.exit(1);
+}
+
 const pool = new Pool({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+  connectionString: connectionString,
+  // Opsional, tambahkan ini untuk koneksi yang lebih stabil di serverless
+  ssl: { rejectUnauthorized: false } 
 });
 
 module.exports = pool;
