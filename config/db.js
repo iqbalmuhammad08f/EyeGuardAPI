@@ -2,7 +2,7 @@
 const { Pool } = require('pg');
 
 // Ambil connection string dari environment variable yang disediakan Vercel
-const connectionString = process.env.POSTGRES_URL;
+const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
   console.error('FATAL ERROR: Environment variable POSTGRES_URL is not set.');
