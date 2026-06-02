@@ -5,8 +5,34 @@ const pool = require('../config/db');
 const router = express.Router();
 
 /**
- * POST /api/usage
- * Menerima data penggunaan HP dari Flutter (sudah diproses)
+ * @openapi
+ * /api/usage:
+ *   post:
+ *     tags:
+ *       - Usage Data
+ *     summary: Kirim data penggunaan HP dan sensor cahaya
+ *     description: Endpoint ini menerima data agregat dari Flutter (diproses periodik)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UsagePayload'
+ *     responses:
+ *       201:
+ *         description: Data berhasil disimpan
+ *       400:
+ *         description: Field wajib tidak lengkap
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Token tidak valid
+ *       500:
+ *         description: Internal server error
  */
 router.post('/usage', authMiddleware, async (req, res) => {
     const userId = req.user.userId;

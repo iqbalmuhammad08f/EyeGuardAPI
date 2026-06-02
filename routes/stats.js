@@ -5,8 +5,53 @@ const pool = require('../config/db');
 const router = express.Router();
 
 /**
- * GET /api/stats?period=day&date=2026-06-02
- * period: day (default), week, month
+ * @openapi
+ * /api/stats:
+ *   get:
+ *     tags:
+ *       - Statistics
+ *     summary: Ambil statistik penggunaan
+ *     description: Mendapatkan ringkasan penggunaan HP (total durasi, durasi gelap, persentase, dan per aplikasi)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: period
+ *         schema:
+ *           type: string
+ *           enum: [day, week, month]
+ *         description: Periode data (default day)
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Tanggal spesifik untuk period=day (default hari ini)
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Tanggal awal untuk rentang bebas (gunakan bersama endDate)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Tanggal akhir untuk rentang bebas
+ *     responses:
+ *       200:
+ *         description: Berhasil mengambil data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - $ref: '#/components/schemas/DailyStatsResponse'
+ *                 - $ref: '#/components/schemas/WeeklyStatsResponse'
+ *       401:
+ *         description: Token tidak valid
+ *       500:
+ *         description: Internal server error
  */
 router.get('/stats', authMiddleware, async (req, res) => {
     const userId = req.user.userId;
