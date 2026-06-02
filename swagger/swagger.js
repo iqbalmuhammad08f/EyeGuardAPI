@@ -17,10 +17,10 @@ const options = {
                 url: 'https://eye-guard-api.vercel.app',
                 description: 'Production Server'
             },
-            // {
-            //     url: 'http://localhost:3000',
-            //     description: 'Development Server'
-            // }
+            {
+                url: 'http://localhost:3000',
+                description: 'Development Server'
+            }
         ],
         components: {
             securitySchemes: {
@@ -31,6 +31,7 @@ const options = {
                 }
             },
             schemas: {
+                // ===== AUTH SCHEMAS =====
                 RegisterRequest: {
                     type: 'object',
                     required: ['email', 'password'],
@@ -78,6 +79,28 @@ const options = {
                         new_password: { type: 'string', minLength: 8 }
                     }
                 },
+                AuthResponse: {
+                    type: 'object',
+                    properties: {
+                        message: { type: 'string', example: 'Login berhasil' },
+                        token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIs...' },
+                        userId: { type: 'integer', example: 1 }
+                    }
+                },
+                SuccessResponse: {
+                    type: 'object',
+                    properties: {
+                        message: { type: 'string' }
+                    }
+                },
+                ErrorResponse: {
+                    type: 'object',
+                    properties: {
+                        error: { type: 'string' }
+                    }
+                },
+
+                // ===== USAGE DATA SCHEMAS =====
                 AppUsage: {
                     type: 'object',
                     required: ['packageName', 'appName', 'durationMinutes'],
@@ -106,19 +129,23 @@ const options = {
                         lightReadings: { type: 'array', items: { $ref: '#/components/schemas/LightReading' } }
                     }
                 },
+
+                // ===== STATISTICS SCHEMAS =====
+                DailySummary: {
+                    type: 'object',
+                    properties: {
+                        date: { type: 'string', format: 'date' },
+                        total_minutes: { type: 'integer' },
+                        dark_minutes: { type: 'integer' },
+                        dark_percentage: { type: 'number' }
+                    }
+                },
                 DailyStatsResponse: {
                     type: 'object',
                     properties: {
                         period: { type: 'string', example: 'day' },
                         date: { type: 'string', format: 'date' },
-                        summary: {
-                            type: 'object',
-                            properties: {
-                                total_minutes: { type: 'integer' },
-                                dark_minutes: { type: 'integer' },
-                                dark_percentage: { type: 'number', format: 'float' }
-                            }
-                        },
+                        summary: { $ref: '#/components/schemas/DailySummary' },
                         apps: { type: 'array', items: { $ref: '#/components/schemas/AppUsage' } }
                     }
                 },
@@ -129,37 +156,15 @@ const options = {
                         startDate: { type: 'string', format: 'date' },
                         endDate: { type: 'string', format: 'date' },
                         daily: { type: 'array', items: { $ref: '#/components/schemas/DailySummary' } },
-                        summary: {
-                            type: 'object',
-                            properties: {
-                                total_minutes: { type: 'integer' },
-                                dark_minutes: { type: 'integer' },
-                                dark_percentage: { type: 'number' }
-                            }
-                        }
-                    }
-                },
-                DailySummary: {
-                    type: 'object',
-                    properties: {
-                        date: { type: 'string', format: 'date' },
-                        total_minutes: { type: 'integer' },
-                        dark_minutes: { type: 'integer' },
-                        dark_percentage: { type: 'number' }
-                    }
-                },
-                ErrorResponse: {
-                    type: 'object',
-                    properties: {
-                        error: { type: 'string' }
+                        summary: { $ref: '#/components/schemas/DailySummary' }
                     }
                 }
             }
         },
         tags: [
-            { name: 'Authentication' },
-            { name: 'Usage Data' },
-            { name: 'Statistics' }
+            { name: 'Authentication', description: 'Endpoint untuk registrasi, verifikasi OTP, login, forgot password, reset password' },
+            { name: 'Usage Data', description: 'Mengirim data penggunaan HP (dilindungi JWT)' },
+            { name: 'Statistics', description: 'Mengambil statistik penggunaan (dilindungi JWT)' }
         ]
     },
     apis: ['./routes/*.js']
