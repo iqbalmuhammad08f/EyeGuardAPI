@@ -16,10 +16,18 @@ app.use(express.json());
 app.get('/', (req, res) => {
     res.json({
         message: 'EyeGuard API is running',
-        docs: '/api-docs',
+        documentation: '/api-docs',
         endpoints: {
-            auth: '/api/auth',
-            dashboard: '/api/dashboard'
+            auth: {
+                register: 'POST /api/auth/register',
+                verifyOtp: 'POST /api/auth/verify-otp',
+                login: 'POST /api/auth/login',
+                resendOtp: 'POST /api/auth/resend-otp',
+                forgotPassword: 'POST /api/auth/forgot-password',
+                resetPassword: 'POST /api/auth/reset-password'
+            },
+            usage: 'POST /api/usage',
+            stats: 'GET /api/stats?period=day&date=YYYY-MM-DD'
         }
     });
 });
