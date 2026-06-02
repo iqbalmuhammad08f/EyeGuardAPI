@@ -5,7 +5,8 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger/swagger');
 
 const authRoutes = require('./routes/auth');
-const dashboardRoutes = require('./routes/dashboard');
+const usageRoutes = require('./routes/usage');
+const statsRoutes = require('./routes/stats');
 
 const app = express();
 app.use(cors());
@@ -39,9 +40,9 @@ app.get('/api-docs.json', (req, res) => {
 
 // Routes public
 app.use('/api/auth', authRoutes);
+app.use('/api', usageRoutes);   // POST /api/usage
+app.use('/api', statsRoutes);   // GET /api/stats
 
-// Routes protected (perlu JWT)
-app.use('/api/dashboard', dashboardRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
