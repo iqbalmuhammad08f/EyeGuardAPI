@@ -58,7 +58,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
     let { period, date, startDate, endDate } = req.query;
 
     period = period || 'day';
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
 
     try {
         let query = '';
@@ -93,9 +93,10 @@ router.get('/stats', authMiddleware, async (req, res) => {
         }
 
         if (period === 'week') {
-            // 7 hari terakhir termasuk hari ini
-            const end = new Date();
-            const start = new Date();
+            // 7 hari terakhir termasuk hari ini (dalam zona waktu Jakarta)
+            const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+            const end = new Date(todayStr);
+            const start = new Date(todayStr);
             start.setDate(end.getDate() - 6);
             const startStr = start.toISOString().split('T')[0];
             const endStr = end.toISOString().split('T')[0];
@@ -130,9 +131,10 @@ router.get('/stats', authMiddleware, async (req, res) => {
         }
 
         if (period === 'month') {
-            // 30 hari terakhir
-            const end = new Date();
-            const start = new Date();
+            // 30 hari terakhir (dalam zona waktu Jakarta)
+            const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+            const end = new Date(todayStr);
+            const start = new Date(todayStr);
             start.setDate(end.getDate() - 29);
             const startStr = start.toISOString().split('T')[0];
             const endStr = end.toISOString().split('T')[0];

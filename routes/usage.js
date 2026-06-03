@@ -43,16 +43,21 @@ router.post('/usage', authMiddleware, async (req, res) => {
         return res.status(400).json({ error: 'Missing required fields: date, totalUsageMinutes, apps' });
     }
 
-    // Hitung darkPercentage jika tidak dikirim
-    let darkPercentage = (darkUsageMinutes / totalUsageMinutes) * 100;
+    // Hitung darkPercentage jika tidak dikirim, cegah pembagian dengan nol (NaN)
+    let darkPercentage = 0;
+    if (totalUsageMinutes > 0) {
+        darkPercentage = (darkUsageMinutes / totalUsageMinutes) * 100;
+    }
     if (req.body.darkPercentage !== undefined) darkPercentage = req.body.darkPercentage;
     darkPercentage = Math.min(100, Math.max(0, darkPercentage)); // batasi 0-100
 
+    // Dapatkan client koneksi tunggal untuk transaksi yang aman
+    const client = await pool.connect();
     try {
-        await pool.query('BEGIN');
+        await client.query('BEGIN');
 
-        // 1. Simpan atau update daily_usage
-        await pool.query(
+        // 1. Simpan atau update daily_usage menggunakan client tunggal
+        await client.query(
             `INSERT INTO daily_usage (user_id, date, total_minutes, dark_minutes, dark_percentage)
              VALUES ($1, $2, $3, $4, $5)
              ON CONFLICT (user_id, date) DO UPDATE SET
@@ -62,9 +67,9 @@ router.post('/usage', authMiddleware, async (req, res) => {
             [userId, date, totalUsageMinutes, darkUsageMinutes, darkPercentage]
         );
 
-        // 2. Simpan setiap aplikasi
+        // 2. Simpan setiap aplikasi menggunakan client tunggal
         for (const app of apps) {
-            await pool.query(
+            await client.query(
                 `INSERT INTO app_usage (user_id, date, package_name, app_name, duration_minutes, dark_duration_minutes)
                  VALUES ($1, $2, $3, $4, $5, $6)
                  ON CONFLICT (user_id, date, package_name) DO UPDATE SET
@@ -75,10 +80,10 @@ router.post('/usage', authMiddleware, async (req, res) => {
             );
         }
 
-        // 3. Simpan light readings jika ada (opsional)
+        // 3. Simpan light readings jika ada (opsional) menggunakan client tunggal
         if (lightReadings && lightReadings.length > 0) {
             for (const reading of lightReadings) {
-                await pool.query(
+                await client.query(
                     `INSERT INTO light_readings (user_id, lux, recorded_at)
                      VALUES ($1, $2, $3)`,
                     [userId, reading.lux, reading.timestamp]
@@ -86,12 +91,14 @@ router.post('/usage', authMiddleware, async (req, res) => {
             }
         }
 
-        await pool.query('COMMIT');
+        await client.query('COMMIT');
         res.status(201).json({ message: 'Usage data saved successfully' });
     } catch (err) {
-        await pool.query('ROLLBACK');
+        await client.query('ROLLBACK');
         console.error('Error saving usage data:', err);
         res.status(500).json({ error: 'Internal server error' });
+    } finally {
+        client.release(); // KEMBALIKAN KONEKSI KE POOL
     }
 });
 
