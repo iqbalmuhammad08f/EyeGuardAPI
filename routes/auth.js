@@ -400,8 +400,10 @@ router.post('/reset-password', async (req, res) => {
     if (!email || !otp_code || !new_password) {
         return res.status(400).json({ error: 'Email, kode OTP, dan password baru wajib diisi' });
     }
-    if (new_password.length < 8) {
-        return res.status(400).json({ error: 'Password minimal 8 karakter' });
+    
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(new_password)) {
+        return res.status(400).json({ error: 'Password minimal 8 karakter, mengandung huruf besar, huruf kecil, dan angka' });
     }
 
     try {
