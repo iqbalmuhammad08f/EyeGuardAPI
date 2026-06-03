@@ -80,15 +80,23 @@ router.post('/usage', authMiddleware, async (req, res) => {
             );
         }
 
-        // 3. Simpan light readings jika ada (opsional) menggunakan client tunggal
+        // 3. Simpan light readings jika ada (opsional) menggunakan client tunggal (Bulk Insert)
         if (lightReadings && lightReadings.length > 0) {
+            const values = [];
+            const valuePlaceholders = [];
+            let index = 1;
+
             for (const reading of lightReadings) {
-                await client.query(
-                    `INSERT INTO light_readings (user_id, lux, recorded_at)
-                     VALUES ($1, $2, $3)`,
-                    [userId, reading.lux, reading.timestamp]
-                );
+                values.push(userId, reading.lux, reading.timestamp);
+                valuePlaceholders.push(`($${index}, $${index + 1}, $${index + 2})`);
+                index += 3;
             }
+
+            const bulkInsertQuery = `
+                INSERT INTO light_readings (user_id, lux, recorded_at)
+                VALUES ${valuePlaceholders.join(', ')}
+            `;
+            await client.query(bulkInsertQuery, values);
         }
 
         await client.query('COMMIT');

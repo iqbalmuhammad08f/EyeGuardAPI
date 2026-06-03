@@ -6,6 +6,7 @@ const swaggerSpec = require('./swagger/swagger');
 const authRoutes = require('./routes/auth');
 const usageRoutes = require('./routes/usage');
 const statsRoutes = require('./routes/stats');
+const limitsRoutes = require('./routes/limits');
 
 const app = express();
 app.use(cors());
@@ -26,7 +27,12 @@ app.get('/', (req, res) => {
                 resetPassword: 'POST /api/auth/reset-password'
             },
             usage: 'POST /api/usage',
-            stats: 'GET /api/stats?period=day&date=YYYY-MM-DD'
+            stats: 'GET /api/stats?period=day&date=YYYY-MM-DD',
+            limits: {
+                list: 'GET /api/limits',
+                upsert: 'POST /api/limits',
+                delete: 'DELETE /api/limits/:package_name'
+            }
         }
     });
 });
@@ -73,6 +79,7 @@ app.get('/api-docs', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api', usageRoutes);   // POST /api/usage
 app.use('/api', statsRoutes);   // GET /api/stats
+app.use('/api', limitsRoutes);  // GET/POST/DELETE /api/limits
 
 
 const PORT = process.env.PORT || 3000;
