@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger/swagger');
 
 const authRoutes = require('./routes/auth');
@@ -12,7 +11,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Welcome route (menampilkan daftar endpoint)
+// Welcome route
 app.get('/', (req, res) => {
     res.json({
         message: 'EyeGuard API is running',
@@ -21,28 +20,60 @@ app.get('/', (req, res) => {
             auth: {
                 register: 'POST /api/auth/register',
                 verifyOtp: 'POST /api/auth/verify-otp',
-                resendOtp: 'POST /api/auth/resend-otp',
                 login: 'POST /api/auth/login',
+                resendOtp: 'POST /api/auth/resend-otp',
                 forgotPassword: 'POST /api/auth/forgot-password',
                 resetPassword: 'POST /api/auth/reset-password'
             },
-            usage: 'POST /api/usage (protected)',
-            stats: 'GET /api/stats?period=day&date=YYYY-MM-DD (protected)'
+            usage: 'POST /api/usage',
+            stats: 'GET /api/stats?period=day&date=YYYY-MM-DD'
         }
     });
 });
 
 // Swagger docs
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get('/api-docs.json', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(swaggerSpec);
 });
 
-// Routes
+app.get('/api-docs', (req, res) => {
+    res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <title>EyeGuard Mobile API Docs</title>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui.min.css" />
+        </head>
+        <body>
+            <div id="swagger-ui"></div>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui-bundle.js" charset="UTF-8"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
+            <script>
+                window.onload = () => {
+                    window.ui = SwaggerUIBundle({
+                        url: '/api-docs.json',
+                        dom_id: '#swagger-ui',
+                        presets: [
+                            SwaggerUIBundle.presets.apis,
+                            SwaggerUIStandalonePreset
+                        ],
+                        layout: "StandaloneLayout"
+                    });
+                };
+            </script>
+        </body>
+        </html>
+    `);
+});
+
+// Routes public
 app.use('/api/auth', authRoutes);
-app.use('/api', usageRoutes);
-app.use('/api', statsRoutes);
+app.use('/api', usageRoutes);   // POST /api/usage
+app.use('/api', statsRoutes);   // GET /api/stats
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
