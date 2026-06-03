@@ -31,11 +31,11 @@ const options = {
                 }
             },
             schemas: {
-                // ===== AUTH SCHEMAS =====
                 RegisterRequest: {
                     type: 'object',
-                    required: ['email', 'password'],
+                    required: ['name', 'email', 'password'],
                     properties: {
+                        name: { type: 'string', example: 'John Doe' },
                         email: { type: 'string', format: 'email', example: 'user@example.com' },
                         password: { type: 'string', format: 'password', minLength: 8, example: 'Password123' }
                     }
@@ -84,7 +84,8 @@ const options = {
                     properties: {
                         message: { type: 'string', example: 'Login berhasil' },
                         token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIs...' },
-                        userId: { type: 'integer', example: 1 }
+                        userId: { type: 'integer', example: 1 },
+                        name: { type: 'string', example: 'John Doe' }
                     }
                 },
                 SuccessResponse: {
@@ -99,72 +100,42 @@ const options = {
                         error: { type: 'string' }
                     }
                 },
-
-                // ===== USAGE DATA SCHEMAS =====
+                // Schemas untuk Usage & Stats (sudah ada)
                 AppUsage: {
                     type: 'object',
-                    required: ['packageName', 'appName', 'durationMinutes'],
                     properties: {
-                        packageName: { type: 'string', example: 'com.tiktok.android' },
-                        appName: { type: 'string', example: 'TikTok' },
-                        durationMinutes: { type: 'integer', example: 90 },
-                        darkDurationMinutes: { type: 'integer', example: 75 }
-                    }
-                },
-                LightReading: {
-                    type: 'object',
-                    properties: {
-                        lux: { type: 'integer', example: 25 },
-                        timestamp: { type: 'string', format: 'date-time', example: '2026-06-02T08:00:00Z' }
+                        packageName: { type: 'string' },
+                        appName: { type: 'string' },
+                        durationMinutes: { type: 'integer' },
+                        darkDurationMinutes: { type: 'integer' }
                     }
                 },
                 UsagePayload: {
                     type: 'object',
                     required: ['date', 'totalUsageMinutes', 'apps'],
                     properties: {
-                        date: { type: 'string', format: 'date', example: '2026-06-02' },
-                        totalUsageMinutes: { type: 'integer', example: 245 },
-                        darkUsageMinutes: { type: 'integer', example: 196 },
-                        apps: { type: 'array', items: { $ref: '#/components/schemas/AppUsage' } },
-                        lightReadings: { type: 'array', items: { $ref: '#/components/schemas/LightReading' } }
-                    }
-                },
-
-                // ===== STATISTICS SCHEMAS =====
-                DailySummary: {
-                    type: 'object',
-                    properties: {
                         date: { type: 'string', format: 'date' },
-                        total_minutes: { type: 'integer' },
-                        dark_minutes: { type: 'integer' },
-                        dark_percentage: { type: 'number' }
+                        totalUsageMinutes: { type: 'integer' },
+                        darkUsageMinutes: { type: 'integer' },
+                        apps: { type: 'array', items: { $ref: '#/components/schemas/AppUsage' } },
+                        lightReadings: { type: 'array', items: { type: 'object', properties: { lux: { type: 'integer' }, timestamp: { type: 'string', format: 'date-time' } } } }
                     }
                 },
                 DailyStatsResponse: {
                     type: 'object',
                     properties: {
-                        period: { type: 'string', example: 'day' },
+                        period: { type: 'string' },
                         date: { type: 'string', format: 'date' },
-                        summary: { $ref: '#/components/schemas/DailySummary' },
-                        apps: { type: 'array', items: { $ref: '#/components/schemas/AppUsage' } }
-                    }
-                },
-                WeeklyStatsResponse: {
-                    type: 'object',
-                    properties: {
-                        period: { type: 'string', example: 'week' },
-                        startDate: { type: 'string', format: 'date' },
-                        endDate: { type: 'string', format: 'date' },
-                        daily: { type: 'array', items: { $ref: '#/components/schemas/DailySummary' } },
-                        summary: { $ref: '#/components/schemas/DailySummary' }
+                        summary: { type: 'object' },
+                        apps: { type: 'array' }
                     }
                 }
             }
         },
         tags: [
-            { name: 'Authentication', description: 'Endpoint untuk registrasi, verifikasi OTP, login, forgot password, reset password' },
-            { name: 'Usage Data', description: 'Mengirim data penggunaan HP (dilindungi JWT)' },
-            { name: 'Statistics', description: 'Mengambil statistik penggunaan (dilindungi JWT)' }
+            { name: 'Authentication', description: 'Endpoint autentikasi' },
+            { name: 'Usage Data', description: 'Mengirim data penggunaan HP' },
+            { name: 'Statistics', description: 'Mengambil statistik' }
         ]
     },
     apis: ['./routes/*.js']
