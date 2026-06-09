@@ -7,6 +7,10 @@ const { sendOTPEmail } = require('../utils/mailer');
 
 const router = express.Router();
 
+// Shared: validasi format password
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+const PASSWORD_ERROR_MSG = 'Password minimal 8 karakter, mengandung huruf besar, huruf kecil, dan angka';
+
 // Helper: generate OTP 6 digit
 const generateOTP = () => crypto.randomInt(100000, 1000000).toString();
 
@@ -85,9 +89,8 @@ router.post('/register', async (req, res) => {
         return res.status(400).json({ error: 'Nama, email dan password wajib diisi' });
     }
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-    if (!passwordRegex.test(password)) {
-        return res.status(400).json({ error: 'Password minimal 8 karakter, mengandung huruf besar, huruf kecil, dan angka' });
+    if (!PASSWORD_REGEX.test(password)) {
+        return res.status(400).json({ error: PASSWORD_ERROR_MSG });
     }
 
     try {
@@ -401,9 +404,8 @@ router.post('/reset-password', async (req, res) => {
         return res.status(400).json({ error: 'Email, kode OTP, dan password baru wajib diisi' });
     }
     
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-    if (!passwordRegex.test(new_password)) {
-        return res.status(400).json({ error: 'Password minimal 8 karakter, mengandung huruf besar, huruf kecil, dan angka' });
+    if (!PASSWORD_REGEX.test(new_password)) {
+        return res.status(400).json({ error: PASSWORD_ERROR_MSG });
     }
 
     try {

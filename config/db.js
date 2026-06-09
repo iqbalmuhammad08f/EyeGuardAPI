@@ -5,7 +5,7 @@ const { Pool } = require('@neondatabase/serverless');
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
-  console.error('FATAL ERROR: Environment variable POSTGRES_URL is not set.');
+  console.error('FATAL ERROR: Environment variable DATABASE_URL is not set.');
   process.exit(1);
 }
 

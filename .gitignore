@@ -20,3 +20,5 @@ Thumbs.db
 # Database lokal (jika ada file sqlite)
 *.db
 *.sqlite
+
+direktori-eye-guard-mobile.txt

@@ -2,17 +2,55 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const swaggerSpec = require('./swagger/swagger');
+const { getSwaggerUIHtml } = require('./swagger/ui');
 
 const authRoutes = require('./routes/auth');
 const usageRoutes = require('./routes/usage');
+const lightRoutes = require('./routes/light');
 const statsRoutes = require('./routes/stats');
-const limitsRoutes = require('./routes/limits');
+const profileRoutes = require('./routes/profile');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Welcome route
+// ────────────────────────────────────────────────
+// Health Check
+// ────────────────────────────────────────────────
+/**
+ * @openapi
+ * /api/health:
+ *   get:
+ *     tags:
+ *       - System
+ *     summary: Health check endpoint
+ *     description: Cek apakah server sedang berjalan dengan normal
+ *     responses:
+ *       200:
+ *         description: Server berjalan normal
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: ok
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ */
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        version: process.env.npm_package_version || '1.0.0',
+    });
+});
+
+// ────────────────────────────────────────────────
+// Welcome / Root
+// ────────────────────────────────────────────────
 app.get('/', (req, res) => {
     res.json({
         message: 'EyeGuard API is running',
@@ -24,64 +62,49 @@ app.get('/', (req, res) => {
                 login: 'POST /api/auth/login',
                 resendOtp: 'POST /api/auth/resend-otp',
                 forgotPassword: 'POST /api/auth/forgot-password',
-                resetPassword: 'POST /api/auth/reset-password'
+                resetPassword: 'POST /api/auth/reset-password',
             },
             usage: 'POST /api/usage',
-            stats: 'GET /api/stats?period=day&date=YYYY-MM-DD',
-            limits: {
-                list: 'GET /api/limits',
-                upsert: 'POST /api/limits',
-                delete: 'DELETE /api/limits/:package_name'
-            }
-        }
+            light: 'POST /api/light',
+            stats: {
+                main: 'GET /api/stats?period=day|week|month',
+                summary: 'GET /api/stats/summary',
+                light: 'GET /api/stats/light?date=YYYY-MM-DD',
+            },
+            profile: {
+                get: 'GET /api/profile/me',
+                update: 'PATCH /api/profile/me',
+                delete: 'DELETE /api/profile/me',
+            },
+            health: 'GET /api/health',
+        },
     });
 });
 
-// Swagger docs
+// ────────────────────────────────────────────────
+// Swagger Docs
+// ────────────────────────────────────────────────
 app.get('/api-docs.json', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(swaggerSpec);
 });
 
 app.get('/api-docs', (req, res) => {
-    res.send(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <title>EyeGuard Mobile API Docs</title>
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui.min.css" />
-        </head>
-        <body>
-            <div id="swagger-ui"></div>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui-bundle.js" charset="UTF-8"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
-            <script>
-                window.onload = () => {
-                    window.ui = SwaggerUIBundle({
-                        url: '/api-docs.json',
-                        dom_id: '#swagger-ui',
-                        presets: [
-                            SwaggerUIBundle.presets.apis,
-                            SwaggerUIStandalonePreset
-                        ],
-                        layout: "StandaloneLayout"
-                    });
-                };
-            </script>
-        </body>
-        </html>
-    `);
+    res.send(getSwaggerUIHtml('/api-docs.json'));
 });
 
-// Routes public
+// ────────────────────────────────────────────────
+// Routes
+// ────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api', usageRoutes);   // POST /api/usage
-app.use('/api', statsRoutes);   // GET /api/stats
-app.use('/api', limitsRoutes);  // GET/POST/DELETE /api/limits
+app.use('/api', lightRoutes);   // POST /api/light
+app.use('/api', statsRoutes);   // GET  /api/stats, /api/stats/summary, /api/stats/light
+app.use('/api', profileRoutes); // GET/PATCH/DELETE /api/profile/me
 
-
+// ────────────────────────────────────────────────
+// Start
+// ────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

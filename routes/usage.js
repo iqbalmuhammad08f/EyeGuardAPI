@@ -10,8 +10,11 @@ const router = express.Router();
  *   post:
  *     tags:
  *       - Usage Data
- *     summary: Kirim data penggunaan HP dan sensor cahaya
- *     description: Endpoint ini menerima data agregat dari Flutter (diproses periodik)
+ *     summary: Kirim data penggunaan aplikasi
+ *     description: |
+ *       Endpoint ini menerima data agregat penggunaan HP dari Flutter.
+ *       Dipanggil saat pengguna membuka app atau melakukan pull-to-refresh.
+ *       Data sensor cahaya dikirim terpisah via `POST /api/light`.
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -36,27 +39,26 @@ const router = express.Router();
  */
 router.post('/usage', authMiddleware, async (req, res) => {
     const userId = req.user.userId;
-    const { date, totalUsageMinutes, darkUsageMinutes, apps, lightReadings } = req.body;
+    const { date, totalUsageMinutes, darkUsageMinutes, apps } = req.body;
 
-    // Validasi minimal
+    // Validasi field wajib
     if (!date || totalUsageMinutes === undefined || !apps || !apps.length) {
         return res.status(400).json({ error: 'Missing required fields: date, totalUsageMinutes, apps' });
     }
 
-    // Hitung darkPercentage jika tidak dikirim, cegah pembagian dengan nol (NaN)
+    // Hitung darkPercentage, cegah pembagian dengan nol
     let darkPercentage = 0;
     if (totalUsageMinutes > 0) {
-        darkPercentage = (darkUsageMinutes / totalUsageMinutes) * 100;
+        darkPercentage = ((darkUsageMinutes || 0) / totalUsageMinutes) * 100;
     }
     if (req.body.darkPercentage !== undefined) darkPercentage = req.body.darkPercentage;
-    darkPercentage = Math.min(100, Math.max(0, darkPercentage)); // batasi 0-100
+    darkPercentage = Math.min(100, Math.max(0, darkPercentage));
 
-    // Dapatkan client koneksi tunggal untuk transaksi yang aman
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
 
-        // 1. Simpan atau update daily_usage menggunakan client tunggal
+        // 1. Simpan / update daily_usage (UPSERT)
         await client.query(
             `INSERT INTO daily_usage (user_id, date, total_minutes, dark_minutes, dark_percentage)
              VALUES ($1, $2, $3, $4, $5)
@@ -64,10 +66,10 @@ router.post('/usage', authMiddleware, async (req, res) => {
                 total_minutes = EXCLUDED.total_minutes,
                 dark_minutes = EXCLUDED.dark_minutes,
                 dark_percentage = EXCLUDED.dark_percentage`,
-            [userId, date, totalUsageMinutes, darkUsageMinutes, darkPercentage]
+            [userId, date, totalUsageMinutes, darkUsageMinutes || 0, darkPercentage]
         );
 
-        // 2. Simpan setiap aplikasi menggunakan client tunggal
+        // 2. Simpan setiap app (UPSERT)
         for (const app of apps) {
             await client.query(
                 `INSERT INTO app_usage (user_id, date, package_name, app_name, duration_minutes, dark_duration_minutes)
@@ -80,25 +82,6 @@ router.post('/usage', authMiddleware, async (req, res) => {
             );
         }
 
-        // 3. Simpan light readings jika ada (opsional) menggunakan client tunggal (Bulk Insert)
-        if (lightReadings && lightReadings.length > 0) {
-            const values = [];
-            const valuePlaceholders = [];
-            let index = 1;
-
-            for (const reading of lightReadings) {
-                values.push(userId, reading.lux, reading.timestamp);
-                valuePlaceholders.push(`($${index}, $${index + 1}, $${index + 2})`);
-                index += 3;
-            }
-
-            const bulkInsertQuery = `
-                INSERT INTO light_readings (user_id, lux, recorded_at)
-                VALUES ${valuePlaceholders.join(', ')}
-            `;
-            await client.query(bulkInsertQuery, values);
-        }
-
         await client.query('COMMIT');
         res.status(201).json({ message: 'Usage data saved successfully' });
     } catch (err) {
@@ -106,7 +89,7 @@ router.post('/usage', authMiddleware, async (req, res) => {
         console.error('Error saving usage data:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        client.release(); // KEMBALIKAN KONEKSI KE POOL
+        client.release();
     }
 });
 
