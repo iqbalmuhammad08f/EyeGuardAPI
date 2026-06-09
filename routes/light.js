@@ -140,9 +140,9 @@ router.get('/stats/light', authMiddleware, async (req, res) => {
 
     try {
         const result = await pool.query(
-            `SELECT lux, recorded_at
+            `SELECT lux, recorded_at AT TIME ZONE 'UTC' AS recorded_at
              FROM light_readings
-             WHERE user_id = $1 AND recorded_at::date = $2
+             WHERE user_id = $1 AND (recorded_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta')::date = $2
              ORDER BY recorded_at ASC`,
             [userId, targetDate]
         );
