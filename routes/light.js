@@ -4,6 +4,9 @@ const pool = require('../config/db');
 
 const router = express.Router();
 
+// ────────────────────────────────────────────────
+// POST /api/light
+// ────────────────────────────────────────────────
 /**
  * @openapi
  * /api/light:
@@ -56,7 +59,6 @@ router.post('/light', authMiddleware, async (req, res) => {
         return res.status(400).json({ error: 'Field "readings" wajib diisi dan tidak boleh kosong' });
     }
 
-    // Validasi setiap item
     for (const r of readings) {
         if (r.lux === undefined || r.lux === null || typeof r.lux !== 'number') {
             return res.status(400).json({ error: 'Setiap reading harus memiliki field "lux" bertipe number' });
@@ -67,7 +69,6 @@ router.post('/light', authMiddleware, async (req, res) => {
     }
 
     try {
-        // Bulk insert dengan single query
         const values = [];
         const placeholders = readings.map((r, i) => {
             const idx = i * 3;
@@ -86,6 +87,68 @@ router.post('/light', authMiddleware, async (req, res) => {
         });
     } catch (err) {
         console.error('Error saving light data:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ────────────────────────────────────────────────
+// GET /api/stats/light
+// ────────────────────────────────────────────────
+/**
+ * @openapi
+ * /api/stats/light:
+ *   get:
+ *     tags:
+ *       - Light Sensor
+ *     summary: Ambil riwayat sensor cahaya harian
+ *     description: Mendapatkan data pembacaan sensor cahaya (lux) untuk tanggal tertentu
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Tanggal spesifik (YYYY-MM-DD), default hari ini
+ *     responses:
+ *       200:
+ *         description: Berhasil mengambil data riwayat cahaya
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   lux:
+ *                     type: number
+ *                     format: float
+ *                   recorded_at:
+ *                     type: string
+ *                     format: date-time
+ *       401:
+ *         description: Token tidak valid
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/stats/light', authMiddleware, async (req, res) => {
+    const userId = req.user.userId;
+    const { date } = req.query;
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+    const targetDate = date || today;
+
+    try {
+        const result = await pool.query(
+            `SELECT lux, recorded_at
+             FROM light_readings
+             WHERE user_id = $1 AND recorded_at::date = $2
+             ORDER BY recorded_at ASC`,
+            [userId, targetDate]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching light history:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

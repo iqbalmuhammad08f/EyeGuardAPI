@@ -21,4 +21,5 @@ Thumbs.db
 *.db
 *.sqlite
 
-direktori-eye-guard-mobile.txt
+database-dan-direktori-eyeguard-mobile.txt
+scripts/

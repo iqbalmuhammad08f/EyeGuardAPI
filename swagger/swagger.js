@@ -31,6 +31,7 @@ const options = {
                 }
             },
             schemas: {
+                // ── Auth ──────────────────────────────────
                 RegisterRequest: {
                     type: 'object',
                     required: ['name', 'email', 'password'],
@@ -90,24 +91,21 @@ const options = {
                 },
                 SuccessResponse: {
                     type: 'object',
-                    properties: {
-                        message: { type: 'string' }
-                    }
+                    properties: { message: { type: 'string' } }
                 },
                 ErrorResponse: {
                     type: 'object',
-                    properties: {
-                        error: { type: 'string' }
-                    }
+                    properties: { error: { type: 'string' } }
                 },
-                // Schemas untuk Usage & Stats (sudah ada)
+
+                // ── Usage ─────────────────────────────────
                 AppUsage: {
                     type: 'object',
+                    required: ['packageName', 'appName', 'durationMinutes'],
                     properties: {
-                        packageName: { type: 'string' },
-                        appName: { type: 'string' },
-                        durationMinutes: { type: 'integer' },
-                        darkDurationMinutes: { type: 'integer' }
+                        packageName: { type: 'string', example: 'com.zhiliaoapp.musically' },
+                        appName: { type: 'string', example: 'TikTok' },
+                        durationMinutes: { type: 'integer', example: 46 }
                     }
                 },
                 UsagePayload: {
@@ -115,12 +113,15 @@ const options = {
                     required: ['date', 'totalUsageMinutes', 'apps'],
                     properties: {
                         date: { type: 'string', format: 'date', example: '2026-06-09' },
-                        totalUsageMinutes: { type: 'integer', example: 120 },
-                        darkUsageMinutes: { type: 'integer', example: 15 },
-                        darkPercentage: { type: 'number', example: 12.5, description: 'Opsional — dihitung otomatis jika tidak dikirim' },
-                        apps: { type: 'array', items: { $ref: '#/components/schemas/AppUsage' } }
+                        totalUsageMinutes: { type: 'integer', example: 155 },
+                        apps: {
+                            type: 'array',
+                            items: { '$ref': '#/components/schemas/AppUsage' }
+                        }
                     }
                 },
+
+                // ── Light ─────────────────────────────────
                 LightReadingsPayload: {
                     type: 'object',
                     required: ['readings'],
@@ -132,20 +133,38 @@ const options = {
                                 type: 'object',
                                 required: ['lux', 'timestamp'],
                                 properties: {
-                                    lux: { type: 'number', example: 320, description: 'Nilai cahaya dalam satuan lux' },
+                                    lux: { type: 'number', format: 'float', example: 312.75, description: 'Nilai cahaya dalam satuan lux' },
                                     timestamp: { type: 'string', format: 'date-time', example: '2026-06-09T10:00:00Z' }
                                 }
                             }
                         }
                     }
                 },
+
+                // ── Stats ─────────────────────────────────
+                AppUsageStat: {
+                    type: 'object',
+                    properties: {
+                        package_name: { type: 'string', example: 'com.zhiliaoapp.musically' },
+                        app_name: { type: 'string', example: 'TikTok' },
+                        duration_minutes: { type: 'integer', example: 46 }
+                    }
+                },
                 DailyStatsResponse: {
                     type: 'object',
                     properties: {
                         period: { type: 'string', example: 'day' },
-                        date: { type: 'string', format: 'date' },
-                        summary: { type: 'object' },
-                        apps: { type: 'array' }
+                        date: { type: 'string', format: 'date', example: '2026-06-09' },
+                        summary: {
+                            type: 'object',
+                            properties: {
+                                total_minutes: { type: 'integer', example: 155 }
+                            }
+                        },
+                        apps: {
+                            type: 'array',
+                            items: { '$ref': '#/components/schemas/AppUsageStat' }
+                        }
                     }
                 },
                 WeeklyStatsResponse: {
@@ -154,32 +173,39 @@ const options = {
                         period: { type: 'string', example: 'week' },
                         startDate: { type: 'string', format: 'date' },
                         endDate: { type: 'string', format: 'date' },
-                        daily: { type: 'array' },
-                        summary: { type: 'object' }
+                        daily: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: {
+                                    date: { type: 'string', format: 'date' },
+                                    total_minutes: { type: 'integer' },
+                                    apps: {
+                                        type: 'array',
+                                        items: { '$ref': '#/components/schemas/AppUsageStat' }
+                                    }
+                                }
+                            }
+                        },
+                        summary: {
+                            type: 'object',
+                            properties: {
+                                total_minutes: { type: 'integer', example: 6288 }
+                            }
+                        }
                     }
                 },
-                SummaryStatsResponse: {
-                    type: 'object',
-                    properties: {
-                        total_active_days: { type: 'integer', example: 15 },
-                        current_streak: { type: 'integer', example: 3 },
-                        avg_daily_minutes: { type: 'number', example: 120.5 },
-                        avg_dark_percentage: { type: 'number', example: 12.3 },
-                        today: { type: 'object' }
-                    }
-                }
             }
         },
         tags: [
             { name: 'Authentication', description: 'Endpoint autentikasi' },
-            { name: 'Usage Data', description: 'Mengirim data penggunaan aplikasi (dipicu user action)' },
-            { name: 'Light Sensor', description: 'Mengirim data sensor cahaya ambient (dipicu timer 5 menit)' },
-            { name: 'Statistics', description: 'Mengambil statistik penggunaan dan sensor cahaya' },
+            { name: 'Usage Data', description: 'Mengirim dan mengambil data penggunaan aplikasi' },
+            { name: 'Light Sensor', description: 'Mengirim dan mengambil data sensor cahaya ambient' },
             { name: 'Profile', description: 'Melihat, mengedit, dan menghapus data akun pengguna' },
             { name: 'System', description: 'Endpoint sistem (health check)' }
         ]
     },
-    apis: ['./routes/*.js']
+    apis: ['./routes/*.js', './index.js']
 };
 
 module.exports = swaggerJsdoc(options);

@@ -7,7 +7,6 @@ const { getSwaggerUIHtml } = require('./swagger/ui');
 const authRoutes = require('./routes/auth');
 const usageRoutes = require('./routes/usage');
 const lightRoutes = require('./routes/light');
-const statsRoutes = require('./routes/stats');
 const profileRoutes = require('./routes/profile');
 
 const app = express();
@@ -64,12 +63,13 @@ app.get('/', (req, res) => {
                 forgotPassword: 'POST /api/auth/forgot-password',
                 resetPassword: 'POST /api/auth/reset-password',
             },
-            usage: 'POST /api/usage',
-            light: 'POST /api/light',
-            stats: {
-                main: 'GET /api/stats?period=day|week|month',
-                summary: 'GET /api/stats/summary',
-                light: 'GET /api/stats/light?date=YYYY-MM-DD',
+            usage: {
+                send: 'POST /api/usage',
+                history: 'GET /api/stats?period=day|week|month',
+            },
+            light: {
+                send: 'POST /api/light',
+                history: 'GET /api/stats/light?date=YYYY-MM-DD',
             },
             profile: {
                 get: 'GET /api/profile/me',
@@ -97,9 +97,8 @@ app.get('/api-docs', (req, res) => {
 // Routes
 // ────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
-app.use('/api', usageRoutes);   // POST /api/usage
-app.use('/api', lightRoutes);   // POST /api/light
-app.use('/api', statsRoutes);   // GET  /api/stats, /api/stats/summary, /api/stats/light
+app.use('/api', usageRoutes);   // POST /api/usage | GET /api/stats | GET /api/stats/summary
+app.use('/api', lightRoutes);   // POST /api/light | GET /api/stats/light
 app.use('/api', profileRoutes); // GET/PATCH/DELETE /api/profile/me
 
 // ────────────────────────────────────────────────
