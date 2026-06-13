@@ -195,13 +195,94 @@ const options = {
                         }
                     }
                 },
+
+                // ── MonthlyStats (sama strukturnya dengan Weekly) ──────────
+                MonthlyStatsResponse: {
+                    type: 'object',
+                    properties: {
+                        period: { type: 'string', example: 'month' },
+                        startDate: { type: 'string', format: 'date', example: '2026-05-15' },
+                        endDate: { type: 'string', format: 'date', example: '2026-06-13' },
+                        daily: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: {
+                                    date: { type: 'string', format: 'date' },
+                                    total_minutes: { type: 'integer' },
+                                    apps: {
+                                        type: 'array',
+                                        items: { '$ref': '#/components/schemas/AppUsageStat' }
+                                    }
+                                }
+                            }
+                        },
+                        summary: {
+                            type: 'object',
+                            properties: {
+                                total_minutes: { type: 'integer', example: 27440 }
+                            }
+                        }
+                    }
+                },
+
+                // ── Admin ─────────────────────────────────────────────────
+                AdminSummaryResponse: {
+                    type: 'object',
+                    properties: {
+                        totalUsers: { type: 'integer', example: 120 },
+                        activeUsersToday: { type: 'integer', example: 45 },
+                        averageScreenTime: { type: 'number', format: 'float', example: 187.5, description: 'Rata-rata waktu layar dalam menit' },
+                        averageLux: { type: 'number', format: 'float', example: 420.3, description: 'Rata-rata intensitas cahaya (lux)' }
+                    }
+                },
+                AdminUserItem: {
+                    type: 'object',
+                    properties: {
+                        id: { type: 'integer', example: 1 },
+                        name: { type: 'string', example: 'John Doe' },
+                        email: { type: 'string', format: 'email' },
+                        created_at: { type: 'string', format: 'date-time' },
+                        avg_screen_time_minutes: { type: 'number', format: 'float', example: 155.5 },
+                        max_screen_time_minutes: { type: 'integer', example: 320 }
+                    }
+                },
+                AdminUsersResponse: {
+                    type: 'object',
+                    properties: {
+                        users: {
+                            type: 'array',
+                            items: { '$ref': '#/components/schemas/AdminUserItem' }
+                        },
+                        pagination: {
+                            type: 'object',
+                            properties: {
+                                total: { type: 'integer', example: 120 },
+                                page: { type: 'integer', example: 1 },
+                                limit: { type: 'integer', example: 10 },
+                                totalPages: { type: 'integer', example: 12 }
+                            }
+                        }
+                    }
+                },
+                AdminTopAppItem: {
+                    type: 'object',
+                    properties: {
+                        app_name: { type: 'string', example: 'TikTok' },
+                        package_name: { type: 'string', example: 'com.zhiliaoapp.musically' },
+                        total_duration_minutes: { type: 'integer', example: 5200 },
+                        avg_duration_minutes: { type: 'number', format: 'float', example: 43.3 },
+                        active_users_count: { type: 'integer', example: 120 }
+                    }
+                },
             }
         },
         tags: [
-            { name: 'Authentication', description: 'Endpoint autentikasi' },
+            { name: 'Authentication', description: 'Endpoint autentikasi (register, login, OTP, reset password)' },
             { name: 'Usage Data', description: 'Mengirim dan mengambil data penggunaan aplikasi' },
             { name: 'Light Sensor', description: 'Mengirim dan mengambil data sensor cahaya ambient' },
             { name: 'Profile', description: 'Melihat, mengedit, dan menghapus data akun pengguna' },
+            { name: 'Admin', description: 'Endpoint khusus admin — memerlukan role admin' },
             { name: 'System', description: 'Endpoint sistem (health check)' }
         ]
     },

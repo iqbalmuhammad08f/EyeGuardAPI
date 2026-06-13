@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const pool = require('../config/db');
 const authMiddleware = require('../middlewares/authMiddleware');
+const { validatePassword } = require('../utils/validators');
 
 const router = express.Router();
 
@@ -129,13 +130,10 @@ router.patch('/profile/me', authMiddleware, async (req, res) => {
         return res.status(400).json({ error: 'currentPassword wajib diisi untuk mengganti password' });
     }
 
-    // Validasi format newPassword
     if (newPassword) {
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-        if (!passwordRegex.test(newPassword)) {
-            return res.status(400).json({
-                error: 'Password baru minimal 8 karakter, mengandung huruf besar, huruf kecil, dan angka'
-            });
+        const pwCheck = validatePassword(newPassword);
+        if (!pwCheck.valid) {
+            return res.status(400).json({ error: pwCheck.message });
         }
     }
 

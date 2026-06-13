@@ -4,12 +4,9 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const pool = require('../config/db');
 const { sendOTPEmail } = require('../utils/mailer');
+const { validatePassword } = require('../utils/validators');
 
 const router = express.Router();
-
-// Shared: validasi format password
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-const PASSWORD_ERROR_MSG = 'Password minimal 8 karakter, mengandung huruf besar, huruf kecil, dan angka';
 
 // Helper: generate OTP 6 digit
 const generateOTP = () => crypto.randomInt(100000, 1000000).toString();
@@ -57,22 +54,7 @@ const checkCooldown = async (email, tokenType) => {
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - name
- *               - email
- *               - password
- *             properties:
- *               name:
- *                 type: string
- *                 example: "John Doe"
- *               email:
- *                 type: string
- *                 format: email
- *               password:
- *                 type: string
- *                 format: password
- *                 minLength: 8
+ *             $ref: '#/components/schemas/RegisterRequest'
  *     responses:
  *       201:
  *         description: Registrasi berhasil, OTP dikirim
@@ -89,8 +71,9 @@ router.post('/register', async (req, res) => {
         return res.status(400).json({ error: 'Nama, email dan password wajib diisi' });
     }
 
-    if (!PASSWORD_REGEX.test(password)) {
-        return res.status(400).json({ error: PASSWORD_ERROR_MSG });
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.valid) {
+        return res.status(400).json({ error: pwCheck.message });
     }
 
     try {
@@ -289,7 +272,7 @@ router.post('/login', async (req, res) => {
 
     try {
         const userResult = await pool.query(
-            'SELECT id, name, email, password_hash, is_verified FROM users WHERE email = $1',
+            'SELECT id, name, email, password_hash, is_verified, role FROM users WHERE email = $1',
             [email]
         );
         if (userResult.rows.length === 0) {
@@ -306,8 +289,9 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Email atau password salah' });
         }
 
+        // Simpan role di JWT agar middleware admin tidak perlu query DB setiap request
         const token = jwt.sign(
-            { userId: user.id, email: user.email, name: user.name },
+            { userId: user.id, email: user.email, name: user.name, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
@@ -404,8 +388,9 @@ router.post('/reset-password', async (req, res) => {
         return res.status(400).json({ error: 'Email, kode OTP, dan password baru wajib diisi' });
     }
     
-    if (!PASSWORD_REGEX.test(new_password)) {
-        return res.status(400).json({ error: PASSWORD_ERROR_MSG });
+    const pwCheck = validatePassword(new_password);
+    if (!pwCheck.valid) {
+        return res.status(400).json({ error: pwCheck.message });
     }
 
     try {

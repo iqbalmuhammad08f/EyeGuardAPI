@@ -93,16 +93,25 @@ router.post('/usage', authMiddleware, async (req, res) => {
         );
         const dailyUsageId = dailyResult.rows[0].id;
 
-        // 2. UPSERT setiap app — relasi via daily_usage_id
-        for (const app of apps) {
+        // 2. Bulk UPSERT semua app sekaligus dengan unnest — 1 query, bukan N query
+        if (apps.length > 0) {
+            const userIds        = apps.map(() => userId);
+            const dates          = apps.map(() => date);
+            const dailyUsageIds  = apps.map(() => dailyUsageId);
+            const packageNames   = apps.map(a => a.packageName);
+            const appNames       = apps.map(a => a.appName);
+            const durations      = apps.map(a => a.durationMinutes);
+
             await client.query(
                 `INSERT INTO app_usage
                     (user_id, date, daily_usage_id, package_name, app_name, duration_minutes)
-                 VALUES ($1, $2, $3, $4, $5, $6)
+                 SELECT * FROM unnest(
+                    $1::int[], $2::date[], $3::int[], $4::text[], $5::text[], $6::int[]
+                 )
                  ON CONFLICT (daily_usage_id, package_name) DO UPDATE SET
                     duration_minutes = EXCLUDED.duration_minutes,
-                    app_name = EXCLUDED.app_name`,
-                [userId, date, dailyUsageId, app.packageName, app.appName, app.durationMinutes]
+                    app_name         = EXCLUDED.app_name`,
+                [userIds, dates, dailyUsageIds, packageNames, appNames, durations]
             );
         }
 
@@ -159,6 +168,7 @@ router.post('/usage', authMiddleware, async (req, res) => {
  *               oneOf:
  *                 - $ref: '#/components/schemas/DailyStatsResponse'
  *                 - $ref: '#/components/schemas/WeeklyStatsResponse'
+ *                 - $ref: '#/components/schemas/MonthlyStatsResponse'
  *       400:
  *         description: Period tidak valid
  *       401:

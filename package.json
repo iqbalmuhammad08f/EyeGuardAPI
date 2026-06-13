@@ -1,7 +1,7 @@
 {
   "name": "eyeguardapi",
   "version": "1.0.0",
-  "description": "Tes",
+  "description": "Backend API untuk EyeGuard Mobile — monitoring penggunaan smartphone dengan deteksi kondisi cahaya lingkungan",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -17,7 +17,7 @@
     "url": "git+https://github.com/iqbalmuhammad08f/EyeGuardAPI.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "iqbalmuhammad08f",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
@@ -30,11 +30,10 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^8.0.8",
-    "pg": "^8.21.0",
-    "swagger-jsdoc": "^6.3.0",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-jsdoc": "^6.3.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

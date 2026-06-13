@@ -11,8 +11,10 @@ if (!connectionString) {
 
 const pool = new Pool({
   connectionString: connectionString,
-  // Opsional, tambahkan ini untuk koneksi yang lebih stabil di serverless
-  ssl: { rejectUnauthorized: false } 
+  // Di production (Vercel/Neon) gunakan SSL penuh; saat dev lokal bisa relax
+  ssl: process.env.NODE_ENV === 'production'
+    ? true
+    : { rejectUnauthorized: false },
 });
 
 module.exports = pool;
